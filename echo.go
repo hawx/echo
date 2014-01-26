@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -70,22 +72,46 @@ func isStatusCode(s string) bool {
 	return true
 }
 
+func handleCode(w http.ResponseWriter, r *httpRequest) {
+	code, err := strconv.ParseInt(r.URL.Path[1:], 10, 0)
+	if err != nil {
+		log.Println(err)
+	}
+
+	w.WriteHeader(int(code))
+	fmt.Fprint(w, createResponseBody(r))
+	return
+}
+
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if isStatusCode(r.URL.Path[1:]) {
-			code, err := strconv.ParseInt(r.URL.Path[1:], 10, 0)
-			if err != nil {
-				log.Println(err)
-			}
-
-			w.WriteHeader(int(code))
-			fmt.Fprint(w, createResponseBody(r))
+			handleCode(w, r)
 			return
 		}
 
 		fmt.Fprint(w, createResponseBody(r))
 	})
 
-	log.Println("serving on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	port := flag.String("port", "8080", "")
+	socket := flag.String("socket", "", "")
+
+	flag.Parse()
+
+	if *socket == "" {
+		log.Println("serving on :" + *port)
+		log.Fatal(http.ListenAndServe(":"+*port, nil))
+
+	} else {
+		l, err := net.Listen("unix", *socket)
+
+		if err != nil {
+			log.Fatal("%s\n", err)
+		} else {
+			err := http.Serve(l, nil)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
 }
