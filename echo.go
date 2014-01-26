@@ -72,7 +72,7 @@ func isStatusCode(s string) bool {
 	return true
 }
 
-func handleCode(w http.ResponseWriter, r *httpRequest) {
+func handleCode(w http.ResponseWriter, r *http.Request) {
 	code, err := strconv.ParseInt(r.URL.Path[1:], 10, 0)
 	if err != nil {
 		log.Println(err)
