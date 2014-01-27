@@ -56,14 +56,6 @@ func createResponseBody(r *http.Request) string {
 	return string(b) + "\n"
 }
 
-// this is me being lazy
-func isStatusCode(s string) bool {
-	return len(s) == 3 &&
-		s[0] >= '1' && s[0] <= '5' &&
-		s[1] >= '0' && s[1] <= '9' &&
-		s[2] >= '0' && s[2] <= '9'
-}
-
 func main() {
 	http.HandleFunc("/delay/", func(w http.ResponseWriter, r *http.Request) {
 		ms, err := strconv.ParseInt(r.URL.Path[7:], 10, 64)
