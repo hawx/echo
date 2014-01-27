@@ -13,31 +13,31 @@ import (
 )
 
 type Any interface{}
+type Json map[string]Any
 
 func createResponseBody(r *http.Request) string {
 	err := r.ParseForm()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("form:", err)
 	}
 
-	form := map[string]Any{}
+	form := Json{}
 	for k, v := range r.Form {
 		form[k] = v
 	}
 
-	headers := map[string]Any{}
+	headers := Json{}
 	for k, v := range r.Header {
 		headers[k] = strings.Join(v, ", ")
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
-
 	if err != nil {
-		log.Fatal(err)
+		log.Println("body:", err)
 	}
 
-	j := map[string]Any{
+	j := Json{
 		"method":  r.Method,
 		"url":     r.Host + r.URL.String(),
 		"version": r.Proto,
@@ -48,7 +48,8 @@ func createResponseBody(r *http.Request) string {
 
 	b, err := json.MarshalIndent(j, "", "  ")
 	if err != nil {
-		log.Fatal(err)
+		log.Println("json:", err)
+		return ""
 	}
 
 	return string(b) + "\n"
@@ -56,20 +57,10 @@ func createResponseBody(r *http.Request) string {
 
 // this is me being lazy
 func isStatusCode(s string) bool {
-	if len(s) != 3 {
-		return false
-	}
-
-	switch {
-	case s[0] < '1' || s[0] > '5':
-		return false
-	case s[1] < '0' || s[1] > '9':
-		return false
-	case s[2] < '0' || s[2] > '9':
-		return false
-	}
-
-	return true
+	return len(s) == 3 &&
+		s[0] >= '1' && s[0] <= '5' &&
+		s[1] >= '0' && s[1] <= '9' &&
+		s[2] >= '0' && s[2] <= '9'
 }
 
 func handleCode(w http.ResponseWriter, r *http.Request) {
@@ -104,14 +95,13 @@ func main() {
 
 	} else {
 		l, err := net.Listen("unix", *socket)
-
 		if err != nil {
 			log.Fatal("%s\n", err)
-		} else {
-			err := http.Serve(l, nil)
-			if err != nil {
-				log.Fatal(err)
-			}
+		}
+
+		err = http.Serve(l, nil)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 }
