@@ -28,3 +28,6 @@ $ curl localhost:8080
 
 `/status/:code`:
   Return response with the given status code.
+
+`/delay/:ms`:
+  Return a response after `ms` milliseconds.

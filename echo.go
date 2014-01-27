@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Any interface{}
@@ -64,6 +65,17 @@ func isStatusCode(s string) bool {
 }
 
 func main() {
+	http.HandleFunc("/delay/", func(w http.ResponseWriter, r *http.Request) {
+		ms, err := strconv.ParseInt(r.URL.Path[7:], 10, 64)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		time.Sleep(time.Duration(ms) * time.Millisecond)
+		fmt.Fprintf(w, createResponseBody(r))
+	})
+
 	http.HandleFunc("/code/", func(w http.ResponseWriter, r *http.Request) {
 		code, err := strconv.ParseInt(r.URL.Path[6:], 10, 0)
 		if err != nil {
