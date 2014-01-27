@@ -63,24 +63,19 @@ func isStatusCode(s string) bool {
 		s[2] >= '0' && s[2] <= '9'
 }
 
-func handleCode(w http.ResponseWriter, r *http.Request) {
-	code, err := strconv.ParseInt(r.URL.Path[1:], 10, 0)
-	if err != nil {
-		log.Println(err)
-	}
-
-	w.WriteHeader(int(code))
-	fmt.Fprint(w, createResponseBody(r))
-	return
-}
-
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if isStatusCode(r.URL.Path[1:]) {
-			handleCode(w, r)
+	http.HandleFunc("/code/", func(w http.ResponseWriter, r *http.Request) {
+		code, err := strconv.ParseInt(r.URL.Path[6:], 10, 0)
+		if err != nil {
+			log.Println(err)
 			return
 		}
 
+		w.WriteHeader(int(code))
+		fmt.Fprint(w, createResponseBody(r))
+	})
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, createResponseBody(r))
 	})
 
