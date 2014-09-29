@@ -8,6 +8,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
 	"strings"
 	"time"
@@ -89,18 +91,28 @@ func main() {
 	flag.Parse()
 
 	if *socket == "" {
-		log.Println("serving on :" + *port)
-		log.Fatal(http.ListenAndServe(":"+*port, nil))
+		go func() {
+			log.Println("serving on :" + *port)
+			log.Fatal(http.ListenAndServe(":"+*port, nil))
+		}()
 
 	} else {
 		l, err := net.Listen("unix", *socket)
 		if err != nil {
-			log.Fatal("%s\n", err)
-		}
-
-		err = http.Serve(l, nil)
-		if err != nil {
 			log.Fatal(err)
 		}
+
+		defer l.Close()
+
+		go func() {
+			log.Println("serving on", *socket)
+			log.Fatal(http.Serve(l, nil))
+		}()
 	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+
+	s := <-c
+	log.Printf("caught %s: shutting down", s)
 }
