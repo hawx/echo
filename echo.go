@@ -11,7 +11,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hawx/route"
 	"github.com/hawx/serve"
+)
+
+var (
+	port   = flag.String("port", "8080", "")
+	socket = flag.String("socket", "", "")
 )
 
 type Any interface{}
@@ -58,8 +64,10 @@ func createResponseBody(r *http.Request) string {
 }
 
 func main() {
-	http.HandleFunc("/delay/", func(w http.ResponseWriter, r *http.Request) {
-		ms, err := strconv.ParseInt(r.URL.Path[7:], 10, 64)
+	flag.Parse()
+
+	route.HandleFunc("/delay/:ms/*path", func(w http.ResponseWriter, r *http.Request) {
+		ms, err := strconv.ParseInt(route.Vars(r)["ms"], 10, 64)
 		if err != nil {
 			log.Println(err)
 			return
@@ -69,8 +77,8 @@ func main() {
 		fmt.Fprintf(w, createResponseBody(r))
 	})
 
-	http.HandleFunc("/code/", func(w http.ResponseWriter, r *http.Request) {
-		code, err := strconv.ParseInt(r.URL.Path[6:], 10, 0)
+	route.HandleFunc("/code/:code/*path", func(w http.ResponseWriter, r *http.Request) {
+		code, err := strconv.ParseInt(route.Vars(r)["code"], 10, 0)
 		if err != nil {
 			log.Println(err)
 			return
@@ -80,14 +88,9 @@ func main() {
 		fmt.Fprint(w, createResponseBody(r))
 	})
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	route.HandleFunc("/*path", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, createResponseBody(r))
 	})
 
-	port := flag.String("port", "8080", "")
-	socket := flag.String("socket", "", "")
-
-	flag.Parse()
-
-	serve.Serve(*port, *socket, http.DefaultServeMux)
+	serve.Serve(*port, *socket, route.Default)
 }
