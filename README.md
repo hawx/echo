@@ -3,7 +3,8 @@
 Simple echoing webserver.
 
 ``` bash
-$ go run echo.go
+$ go get hawx.me/code/echo
+$ $GOPATH/bin/echo
 2014/01/26 21:43:59 serving on :8080
 ```
 
